@@ -9,7 +9,7 @@ class Player {
 
   attack(monster) {
     monster.hp -= this.strength;
-    return monster;
+    return this.strength;
   }
 }
 
@@ -21,7 +21,15 @@ class Monster {
 
   attack(player) {
     player.hp -= this.strength;
+    return this.strength;
   }
+}
+
+function displayRefresh(currentPos, stage, player, monster, logs) {
+  console.clear();
+  displayStatus(stage, player, monster)
+  logs.forEach((log) => console.log(log));
+  displayMenu(currentPos);
 }
 
 function displayMenu(currentPos) {
@@ -93,78 +101,88 @@ const battle = async (stage, player, monster) => {
   var selectedPos = 4
   var menuCount = 4
   var key;
-
-  console.clear();
+  var damagedToPlayer = 0
+  var damagedToMonster = 0
   
+
+  displayRefresh(currentPos, stage, player, monster, logs);
   while(player.hp > 0) {
     
-    displayStatus(stage, player, monster)
-    console.log(player.hp)
+    // console.clear();
+    // displayStatus(stage, player, monster)
+    // logs.forEach((log) => console.log(log));
+    // displayMenu(currentPos)
+    // 선택 전까지 방향키 입력 받기 (A - D // E)
+    while(true) {
+      key = readlineSync.keyIn('', {hideEchoBack: true, mask: '', limit: 'wasdeq'});
+      if (key == 'a') {
+        currentPos = (menuCount + currentPos - 1) % menuCount;
+      } else if (key == 'd') {
+          currentPos = (currentPos + 1) % menuCount;            
+      } else if (key == 'e') {
+          selectedPos = currentPos
+          console.clear();
+          break;
+      } else if (key == 'q') {
+          process.kill();
+      }
+      displayRefresh(currentPos, stage, player, monster, logs);
+    }
+
+
+
     switch (selectedPos) {
       case 0:
-          logs.push(chalk.red(`[${currentPos+1}] 일반 공격을 했습니다!]`));
-          monster.attack(player);
-          logs.forEach((log) => console.log(log));
+          damagedToPlayer = monster.attack(player);
+          damagedToMonster = player.attack(monster);
+          logs.push(chalk.blueBright(`[${currentPos+1}] 몬스터에게 ${damagedToMonster}의 피해를 입혔습니다!`));
+          logs.push(chalk.red(`[${currentPos+1}] 몬스터에게 ${damagedToPlayer}의 피해를 입었습니다!`));
           break;
       case 1:
-          logs.push(chalk.red(`[${currentPos+1}] 연속 공격을 했습니다!]`));
+          logs.push(chalk.blueBright(`[${currentPos+1}] 연속 공격을 했습니다!`));
+          logs.push(chalk.red(`[${currentPos+1}] 몬스터가 ${damagedToPlayer}의 피해를 입혔습니다!`));
           monster.attack(player);
-          logs.forEach((log) => console.log(log));
           break;
       case 2:
-          logs.push(chalk.red(`[${currentPos+1}] 방어를 선택 했습니다!]`));
+          logs.push(chalk.blueBright(`[${currentPos+1}] 방어를 선택 했습니다!`));
+          logs.push(chalk.red(`[${currentPos+1}] 몬스터가 ${damagedToPlayer}의 피해를 입혔습니다!`));
           monster.attack(player);
-          logs.forEach((log) => console.log(log));
           break;
       case 3:
-          logs.push(chalk.red(`[${currentPos+1}] 도망을 선택 했습니다!]`));
+          logs.push(chalk.blueBright(`[${currentPos+1}] 도망을 선택 했습니다!`));
+          // 도망 확률 실패 -> 공격당함
+          // 도망 성공 -> 다음 스테이지
           monster.attack(player);
-          logs.forEach((log) => console.log(log));
           break;
       default:
-          logs.forEach((log) => console.log(log));
+          //logs.forEach((log) => console.log(log));
           //handleUserInput(); // 유효하지 않은 입력일 경우 다시 입력 받음
           //currentPos = handleUserInput(currentPos, stage, player, monster, logs);
     }
 
-    displayMenu(currentPos)
-
-  
-    // 선택 전까지 방향키 입력 받기 (A - D // E)
-    while(true) {
-        key = readlineSync.keyIn('', {hideEchoBack: true, mask: '', limit: 'wasde'});
-        if (key == 'a') {
-            currentPos = (menuCount + currentPos - 1) % menuCount;
-        } else if (key == 'd') {
-            currentPos = (currentPos + 1) % menuCount;            
-        } else if (key == 'e') {
-            selectedPos = currentPos
-            console.clear();
-            //displayStatus(stage, player, monster);
-            break;
-        }
-
-        console.clear();
-        displayStatus(stage, player, monster);
-        logs.forEach((log) => console.log(log));
-        displayMenu(currentPos);
+    if (monster.hp <= 0) {
+      return true
     }
-         
+
+    displayRefresh(currentPos, stage, player, monster, logs);
   }
 };
 
 export async function startGame() {
-  console.clear();
   const player = new Player();
   let stage = 1;
+  var win;
 
   while (stage <= 10) {
     const monster = new Monster(stage);
-    var win = await battle(stage, player, monster);
+    win = await battle(stage, player, monster);
+    console.log(win)
     if (win == false) {
-      console.log('사망하셨습니다')
-      return false
-      break;
+      if (readlineSync.keyInYN('사망하셨습니다. 다시 도전하시겠습니까?')) {
+        return true
+      } else {
+        return false
+      }
     } else {
       stage++;
     }

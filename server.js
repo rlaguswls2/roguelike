@@ -77,17 +77,17 @@ function handleUserInput(currentPos) {
     var key;
     var menuCount = 4;
     while(true) {
-        key = readlineSync.keyIn('', {hideEchoBack: true, mask: '', limit: 'wasde'});
+        key = readlineSync.keyIn('', {hideEchoBack: true, mask: '', limit: 'wasdeq'});
         if (key == 'w') {
             currentPos = (menuCount + currentPos - 1) % menuCount;
             displayLobby(currentPos);
-            console.log('w', currentPos);
         } else if (key == 's') {
             currentPos = (currentPos + 1) % menuCount;
             displayLobby(currentPos)
-            console.log('s', currentPos)
         } else if (key == 'e') {
             break;
+        } else if (keyy == 'q') {
+            process.kill();
         }
     }
 
@@ -97,7 +97,6 @@ function handleUserInput(currentPos) {
             console.log(chalk.green('게임을 시작합니다.'));
             // 여기에서 새로운 게임 시작 로직을 구현
             var result = startGame();
-            console.log(result)
             return result
             break;
         case 1:
@@ -112,8 +111,6 @@ function handleUserInput(currentPos) {
             break;
         case 3:
             console.log(chalk.red('게임을 종료합니다.'));
-            // 게임 종료 로직을 구현
-            //process.exit(0); // 게임 종료
             return false
             break;
         default:
@@ -128,7 +125,6 @@ function start() {
     while(restart) {
         displayLobby(0);
         restart = handleUserInput(0);
-        console.log(restart)
     }
 }
 
