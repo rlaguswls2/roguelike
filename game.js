@@ -168,24 +168,27 @@ const battle = async (stage, player, monster) => {
   }
 };
 
-export async function startGame() {
+export function startGame() {
   const player = new Player();
   let stage = 1;
-  var win;
 
   while (stage <= 10) {
     const monster = new Monster(stage);
-    win = await battle(stage, player, monster);
-    console.log(win)
-    if (win == false) {
+    const win = battle(stage, player, monster);
+    
+    if (!win) {
       if (readlineSync.keyInYN('사망하셨습니다. 다시 도전하시겠습니까?')) {
         return true
       } else {
+        console.log(chalk.red('게임이 종료됩니다.'));
         return false
       }
     } else {
+      console.log(chalk.green(`축하합니다! 스테이지 ${stage}를 클리어 하셨습니다.`));
       stage++;
     }
     // 스테이지 클리어 및 게임 종료 조건
   }
+
+  return false; // 모든 스테이지 클리어 후 메인메뉴로 돌아감.
 }

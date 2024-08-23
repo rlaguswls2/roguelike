@@ -76,6 +76,7 @@ function displayLobby(currentPos) {
 function handleUserInput(currentPos) {
     var key;
     var menuCount = 4;
+
     while(true) {
         key = readlineSync.keyIn('', {hideEchoBack: true, mask: '', limit: 'wasdeq'});
         if (key == 'w') {
@@ -87,18 +88,17 @@ function handleUserInput(currentPos) {
         } else if (key == 'e') {
             break;
         } else if (keyy == 'q') {
+            return false;
             process.kill();
         }
     }
 
-    
     switch (currentPos) {
         case 0:
             console.log(chalk.green('게임을 시작합니다.'));
             // 여기에서 새로운 게임 시작 로직을 구현
             var result = startGame();
             return result
-            break;
         case 1:
             console.log(chalk.yellow('구현 준비중입니다.. 게임을 시작하세요'));
             // 업적 확인하기 로직을 구현
@@ -112,7 +112,6 @@ function handleUserInput(currentPos) {
         case 3:
             console.log(chalk.red('게임을 종료합니다.'));
             return false
-            break;
         default:
             console.log(chalk.red('올바른 선택을 하세요.'));
             handleUserInput(currentPos); // 유효하지 않은 입력일 경우 다시 입력 받음
