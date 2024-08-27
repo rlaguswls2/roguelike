@@ -5,7 +5,7 @@ function rand(min, max) {
 }
 
 function rand2(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+    return Math.random() * (max - min) + min;
 }
 
 function rand3(seed) {
@@ -13,4 +13,6 @@ function rand3(seed) {
     return Math.random() * seed % seed;
 }
 
-console.log(Math.random());
+
+
+console.log(rand2(0.5, 1));

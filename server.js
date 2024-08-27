@@ -87,7 +87,7 @@ function handleUserInput(currentPos) {
             displayLobby(currentPos)
         } else if (key == 'e') {
             break;
-        } else if (keyy == 'q') {
+        } else if (key == 'q') {
             return false;
             process.kill();
         }
@@ -121,6 +121,8 @@ function handleUserInput(currentPos) {
 // 게임 시작 함수
 function start() {
     var restart = true;
+
+
     while(restart) {
         displayLobby(0);
         restart = handleUserInput(0);

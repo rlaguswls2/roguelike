@@ -7,6 +7,10 @@ class Player {
     this.attackAbility = 10; // 초기 공격력
     this.attackScale = 1.7;
     this.doubleAttackChance = 0.65;
+    this.defenseChance = 0.65;
+    this.defenseStatus = false;
+    this.counterRatio = 0.6;
+    this.runOutChance = 0.2;
   }
 
   getMaxDamage() {
@@ -20,7 +24,7 @@ class Player {
   }
 
   doubleAttack(monster) {
-    randChance = Math.random();
+    const randChance = Math.random();
     
     // 실패
     if (randChance > this.doubleAttackChance) {
@@ -29,21 +33,56 @@ class Player {
       return this.attack(monster) + this.attack(monster);
     }
   }
+
+  counterAttack(monster) {
+    var finalDamage = Math.floor(rand(this.attackAbility, this.getMaxDamage())*this.counterRatio);
+    monster.hp = monster.hp - finalDamage;
+    return finalDamage;
+  }
+
+  defense(monster) {
+    const randChance = Math.random();
+
+    if (randChance > this.defenseChance) {
+      this.defenseStatus = false;
+      return 0;
+    } else { // 성공 counterRatio 만큼의 공격력으로 반격
+      this.defenseStatus = true;
+      return this.counterAttack(monster);
+    }
+  }
+
+  runOut() {
+    const randChance = Math.random();
+
+    if (randChance > this.runOutChance) {
+      //도망 실패
+      return false;
+    } else {
+      //도망 성공
+      return true;
+    }
+  }
 }
 
 class Monster {
-  constructor() {
-    this.hp = 100;
-    this.attackAbility = 8; // 초기 공격력
-    this.attackScale = 1.7;
+  constructor(stage) {
+    this.stageScale = 0.2;
+    this.hp = Math.floor(100 * stage * this.stageScale);
+    this.attackAbility = Math.floor(8 * stage * this.stageScale); // 초기 공격력
+    this.attackScale = Math.floor(1.7 * stage * this.stageScale);
   }
 
   getMaxDamage() {
     return Math.floor(this.attackAbility*this.attackScale);
   }
 
+  getDamage() {
+    return rand(this.attackAbility, this.getMaxDamage());
+  }
+
   attack(player) {
-    var finalDamage = rand(this.attackAbility, this.getMaxDamage());
+    const finalDamage = this.getDamage();
     player.hp = player.hp - finalDamage;
     return finalDamage;
   }
@@ -55,58 +94,83 @@ function rand(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function randFloat(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
 function updateStatus(stage, player, monster) {
-  player.hp += 50 // %% 랜덤 적용하기 test로 50씩 회복 %%
-  player.attackAbility += stage // %% 랜덤 적용하기 %%
+  player.hp += 20; // 기본 제공되는 체력 회복
+  var menuCount = 6
+  // 랜덤하게 아래의 능력치중 하나가 정해진 수치내에서 증가
+  var random = rand(1, menuCount);
+  switch (random) {
+    case 1:
+      player.hp += rand(20, 50);
+      break;
+    case 2:
+      player.attackAbility += rand(5, 10);
+      break;
+    case 3:
+      player.attackScale += rand(10, 100)*0.01;
+      break;
+    case 4:
+      player.runOutChance += rand(1, 3)*0.01;
+      break;
+    case 5:
+      player.doubleAttackChance += rand(3, 7)*0.01;
+      break;
+    case 6:
+      player.defenseChance += rand(3, 10)*0.01;
+  }
 }
 
 function displayRefresh(currentPos, stage, player, monster, logs) {
   console.clear();
   displayStatus(stage, player, monster)
   logs.forEach((log) => console.log(log));
-  displayMenu(currentPos);
+  displayMenu(currentPos, player);
 }
 
-function displayMenu(currentPos) {
+function displayMenu(currentPos, player) {
   switch (currentPos) {
       case 0:
           process.stdout.write(chalk.blue.bgWhite.bold('1.') + chalk.black.bgWhite.bold(' 일반공격'))
           process.stdout.write(' ')
-          process.stdout.write(chalk.green('2.') + chalk.green(' 연속공격'))
+          process.stdout.write(chalk.green('2.') + chalk.green(` 연속공격(${Math.floor(player.doubleAttackChance*100)}%)`))
           process.stdout.write(' ')
-          process.stdout.write(chalk.green('3.') + chalk.green(' 방어한다'))
+          process.stdout.write(chalk.green('3.') + chalk.green(` 방어한다(${Math.floor(player.defenseChance*100)}%)`))
           process.stdout.write(' ')
-          process.stdout.write(chalk.green('4.') + chalk.green(' 도망친다'))
+          process.stdout.write(chalk.green('4.') + chalk.green(` 도망친다(${Math.floor(player.runOutChance*100)}%)`))
           console.log('');
           break;
       case 1:
           process.stdout.write(chalk.green('1.') + chalk.green(' 일반공격'))
           process.stdout.write(' ')
-          process.stdout.write(chalk.blue.bgWhite.bold('2.') + chalk.black.bgWhite.bold(' 연속공격'))
+          process.stdout.write(chalk.blue.bgWhite.bold('2.') + chalk.blue.bgWhite.bold(` 연속공격(${Math.floor(player.doubleAttackChance*100)}%)`))
           process.stdout.write(' ')
-          process.stdout.write(chalk.green('3.') + chalk.green(' 방어한다'))
+          process.stdout.write(chalk.green('3.') + chalk.green(` 방어한다(${Math.floor(player.defenseChance*100)}%)`))
           process.stdout.write(' ')
-          process.stdout.write(chalk.green('4.') + chalk.green(' 도망친다'))
+          process.stdout.write(chalk.green('4.') + chalk.green(` 도망친다(${Math.floor(player.runOutChance*100)}%)`))
           console.log('');
           break;
       case 2:
           process.stdout.write(chalk.green('1.') + chalk.green(' 일반공격'))
           process.stdout.write(' ')
-          process.stdout.write(chalk.green('2.') + chalk.green(' 연속공격'))
+          process.stdout.write(chalk.green('2.') + chalk.green(` 연속공격(${Math.floor(player.doubleAttackChance*100)}%)`))
           process.stdout.write(' ')
-          process.stdout.write(chalk.blue.bgWhite.bold('3.') + chalk.black.bgWhite.bold(' 방어한다'))
+          process.stdout.write(chalk.blue.bgWhite.bold('3.') + chalk.black.bgWhite.bold(` 방어한다(${Math.floor(player.defenseChance*100)}%)`))
           process.stdout.write(' ')
-          process.stdout.write(chalk.green('4.') + chalk.green(' 도망친다'))
+          process.stdout.write(chalk.green('4.') + chalk.green(` 도망친다(${Math.floor(player.runOutChance*100)}%)`))
           console.log('');
           break;
       case 3:
           process.stdout.write(chalk.green('1.') + chalk.green(' 일반공격'))
           process.stdout.write(' ')
-          process.stdout.write(chalk.green('2.') + chalk.green(' 연속공격'))
+          process.stdout.write(chalk.green('2.') + chalk.green(` 연속공격(${Math.floor(player.doubleAttackChance*100)}%)`))
           process.stdout.write(' ')
-          process.stdout.write(chalk.green('3.') + chalk.green(' 방어한다'))
+          process.stdout.write(chalk.green('3.') + chalk.green(` 방어한다(${Math.floor(player.defenseChance*100)}%)`))
           process.stdout.write(' ')
-          process.stdout.write(chalk.blue.bgWhite.bold('4.') + chalk.black.bgWhite.bold(' 도망친다'))
+          process.stdout.write(chalk.blue.bgWhite.bold('4.') + chalk.black.bgWhite.bold(` 도망친다(${Math.floor(player.runOutChance*100)}%)`))
           console.log('');
           break;
       default:
@@ -141,11 +205,6 @@ const battle = async (stage, player, monster) => {
 
   displayRefresh(currentPos, stage, player, monster, logs);
   while(player.hp > 0) {
-    
-    // console.clear();
-    // displayStatus(stage, player, monster)
-    // logs.forEach((log) => console.log(log));
-    // displayMenu(currentPos)
     // 선택 전까지 방향키 입력 받기 (A - D // E)
     while(true) {
       key = readlineSync.keyIn('', {hideEchoBack: true, mask: '', limit: 'wasdeq'});
@@ -174,32 +233,51 @@ const battle = async (stage, player, monster) => {
   
           break;
       case 1:
-          //damagedToMonster = player.doubleAttack(monster);
-          logs.push(chalk.blueBright(`[${currentPos+1}] 연속 공격을 했습니다!`));
-
+          damagedToMonster = player.doubleAttack(monster);
+          if (damagedToMonster == 0) {
+            logs.push(chalk.blueBright(`[${currentPos+1}] 연속공격이 실패했습니다.`));
+          } else {
+            logs.push(chalk.blueBright(`[${currentPos+1}] 연속공격이 성공하여 ${damagedToMonster}의 피해를 입혔습니다!`));
+          }
+        
           if (monster.hp > 0) {
             damagedToPlayer = monster.attack(player);
+            
             logs.push(chalk.red(`[${currentPos+1}] 몬스터에게 ${damagedToPlayer}의 피해를 입었습니다!`));
           }
           
           break;
-      case 2:
-          //player.defense();
-          //logs.push(chalk.blueBright(`[${currentPos+1}] 잠시동안 방어도가 ${player.armor}만큼 증가했습니다!`));
-          damagedToPlayer = monster.attack(player);
-          logs.push(chalk.red(`[${currentPos+1}] 몬스터에게 ${damagedToPlayer}의 피해를 입었습니다!`));          
+      case 2: // 방어
+          const defenseResult = player.defense(monster)
+          if (defenseResult == 0) {
+            logs.push(chalk.blueBright(`[${currentPos+1}] 방어에 실패했습니다.`));
+
+            damagedToPlayer = monster.attack(player);  
+            logs.push(chalk.red(`[${currentPos+1}] 몬스터에게 ${damagedToPlayer}의 피해를 입었습니다!`));
+          } else {
+            logs.push(chalk.blueBright(`[${currentPos+1}] 방어에 성공했습니다! 반격하여 ${defenseResult}의 피해를 입혔습니다!`));
+          }
+               
           break;
       case 3:
-          logs.push(chalk.blueBright(`[${currentPos+1}] 도망을 선택 했습니다!`));
-          // 도망 확률 실패 -> 공격당함
-          // 도망 성공 -> 다음 스테이지
-          monster.attack(player);
+          const runOutResult = player.runOut();
+          if (runOutResult) {
+            return true;
+            // 다음 스테이지
+          } else {
+            logs.push(chalk.blueBright(`[${currentPos+1}] 도망에 실패했습니다..`));
+            damagedToPlayer = monster.attack(player);  
+            logs.push(chalk.red(`[${currentPos+1}] 몬스터에게 ${damagedToPlayer}의 피해를 입었습니다!`));
+          }
           break;
     }
 
 
     if (monster.hp <= 0) {
       return true
+    }
+    if (player.hp <= 0) {
+      return false
     }
 
     displayRefresh(currentPos, stage, player, monster, logs);
@@ -211,16 +289,11 @@ export function startGame() {
   let stage = 1;
 
   while (stage <= 10) {
-    const monster = new Monster(); // %% 인자로 매 스테이지값을 통해 몬스터 강화 %%
+    const monster = new Monster(stage); // %% 인자로 매 스테이지값을 통해 몬스터 강화 %%
     const win = battle(stage, player, monster);
     
     if (!win) {
-      if (readlineSync.keyInYN('사망하셨습니다. 다시 도전하시겠습니까?')) {
-        return true
-      } else {
-        console.log(chalk.red('게임이 종료됩니다.'));
-        return false
-      }
+      return false
     } else {
       console.log(chalk.green(`축하합니다! 스테이지 ${stage}를 클리어 하셨습니다.`));
       stage++;
