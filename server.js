@@ -89,16 +89,15 @@ function handleUserInput(currentPos) {
             break;
         } else if (key == 'q') {
             return false;
-            process.kill();
         }
     }
-
+    let result;
     switch (currentPos) {
         case 0:
             console.log(chalk.green('게임을 시작합니다.'));
             // 여기에서 새로운 게임 시작 로직을 구현
-            var result = startGame();
-            return result
+            result = startGame()
+            return result;
         case 1:
             console.log(chalk.yellow('구현 준비중입니다.. 게임을 시작하세요'));
             // 업적 확인하기 로직을 구현
@@ -121,12 +120,12 @@ function handleUserInput(currentPos) {
 // 게임 시작 함수
 function start() {
     var restart = true;
-
-
     while(restart) {
         displayLobby(0);
         restart = handleUserInput(0);
     }
+
+    console.log('게임이 종료되었습니다.')
 }
 
 // 게임 실행

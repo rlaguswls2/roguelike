@@ -194,7 +194,7 @@ function displayStatus(stage, player, monster) {
   console.log(chalk.magentaBright(`=====================\n`));
 }
 
-const battle = async (stage, player, monster) => {
+function battle(stage, player, monster) {
   let logs = [];
   var currentPos = 0
   var menuCount = 4
@@ -202,8 +202,8 @@ const battle = async (stage, player, monster) => {
   var damagedToPlayer = 0
   var damagedToMonster = 0
   
-
   displayRefresh(currentPos, stage, player, monster, logs);
+
   while(player.hp > 0) {
     // 선택 전까지 방향키 입력 받기 (A - D // E)
     while(true) {
@@ -228,36 +228,32 @@ const battle = async (stage, player, monster) => {
           logs.push(chalk.blueBright(`[${currentPos+1}] 몬스터에게 ${damagedToMonster}의 피해를 입혔습니다!`));
           if (monster.hp > 0) {
               damagedToPlayer = monster.attack(player);  
-              logs.push(chalk.red(`[${currentPos+1}] 몬스터에게 ${damagedToPlayer}의 피해를 입었습니다!`));
+              logs.push(chalk.magenta(`[${currentPos+1}] 몬스터에게 ${damagedToPlayer}의 피해를 입었습니다!`));
           }
   
           break;
       case 1:
           damagedToMonster = player.doubleAttack(monster);
           if (damagedToMonster == 0) {
-            logs.push(chalk.blueBright(`[${currentPos+1}] 연속공격이 실패했습니다.`));
+            logs.push(chalk.red(`[${currentPos+1}] 연속공격이 실패했습니다.`));
           } else {
-            logs.push(chalk.blueBright(`[${currentPos+1}] 연속공격이 성공하여 ${damagedToMonster}의 피해를 입혔습니다!`));
+            logs.push(chalk.cyanBright(`[${currentPos+1}] 연속공격이 성공하여 ${damagedToMonster}의 피해를 입혔습니다!`));
           }
         
           if (monster.hp > 0) {
             damagedToPlayer = monster.attack(player);
-            
-            logs.push(chalk.red(`[${currentPos+1}] 몬스터에게 ${damagedToPlayer}의 피해를 입었습니다!`));
+            logs.push(chalk.magenta(`[${currentPos+1}] 몬스터에게 ${damagedToPlayer}의 피해를 입었습니다!`));
           }
-          
           break;
       case 2: // 방어
           const defenseResult = player.defense(monster)
           if (defenseResult == 0) {
-            logs.push(chalk.blueBright(`[${currentPos+1}] 방어에 실패했습니다.`));
-
+            logs.push(chalk.red(`[${currentPos+1}] 방어에 실패했습니다.`));
             damagedToPlayer = monster.attack(player);  
-            logs.push(chalk.red(`[${currentPos+1}] 몬스터에게 ${damagedToPlayer}의 피해를 입었습니다!`));
+            logs.push(chalk.magenta(`[${currentPos+1}] 몬스터에게 ${damagedToPlayer}의 피해를 입었습니다!`));
           } else {
             logs.push(chalk.blueBright(`[${currentPos+1}] 방어에 성공했습니다! 반격하여 ${defenseResult}의 피해를 입혔습니다!`));
           }
-               
           break;
       case 3:
           const runOutResult = player.runOut();
@@ -265,9 +261,9 @@ const battle = async (stage, player, monster) => {
             return true;
             // 다음 스테이지
           } else {
-            logs.push(chalk.blueBright(`[${currentPos+1}] 도망에 실패했습니다..`));
+            logs.push(chalk.red(`[${currentPos+1}] 도망에 실패했습니다..`));
             damagedToPlayer = monster.attack(player);  
-            logs.push(chalk.red(`[${currentPos+1}] 몬스터에게 ${damagedToPlayer}의 피해를 입었습니다!`));
+            logs.push(chalk.magenta(`[${currentPos+1}] 몬스터에게 ${damagedToPlayer}의 피해를 입었습니다!`));
           }
           break;
     }
@@ -277,11 +273,14 @@ const battle = async (stage, player, monster) => {
       return true
     }
     if (player.hp <= 0) {
+      console.log('플레이어가 죽었습니다.');
       return false
     }
 
     displayRefresh(currentPos, stage, player, monster, logs);
   }
+
+  return false; // 예외적인 종료시 false 반환
 };
 
 export function startGame() {
@@ -291,9 +290,13 @@ export function startGame() {
   while (stage <= 10) {
     const monster = new Monster(stage); // %% 인자로 매 스테이지값을 통해 몬스터 강화 %%
     const win = battle(stage, player, monster);
-    
     if (!win) {
-      return false
+      if (readlineSync.keyInYN('다시 도전하시겠습니까?')) { // % 키보드 선택 방식으로 바꾸기 %
+        return true
+      } else {
+        return false
+      }
+      
     } else {
       console.log(chalk.green(`축하합니다! 스테이지 ${stage}를 클리어 하셨습니다.`));
       stage++;
