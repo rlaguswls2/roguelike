@@ -1,0 +1,23 @@
+[
+  {
+    "name": "첫 번째 몬스터 처치",
+    "description": "처음으로 몬스터를 처치합니다.",
+    "goal": 1,
+    "progress": 0,
+    "completed": false
+  },
+  {
+    "name": "몬스터 10마리 처치",
+    "description": "몬스터 10마리를 처치합니다.",
+    "goal": 10,
+    "progress": 0,
+    "completed": false
+  },
+  {
+    "name": "도망 성공 5회",
+    "description": "도망을 5번 성공합니다.",
+    "goal": 5,
+    "progress": 0,
+    "completed": false
+  }
+]

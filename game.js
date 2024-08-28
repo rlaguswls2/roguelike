@@ -94,10 +94,6 @@ function rand(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function randFloat(min, max) {
-  return Math.random() * (max - min) + min;
-}
-
 function updateStatus(stage, player, monster) {
   player.hp += 20; // 기본 제공되는 체력 회복
   var menuCount = 6
@@ -132,52 +128,23 @@ function displayRefresh(currentPos, stage, player, monster, logs) {
 }
 
 function displayMenu(currentPos, player) {
-  switch (currentPos) {
-      case 0:
-          process.stdout.write(chalk.blue.bgWhite.bold('1.') + chalk.black.bgWhite.bold(' 일반공격'))
-          process.stdout.write(' ')
-          process.stdout.write(chalk.green('2.') + chalk.green(` 연속공격(${Math.floor(player.doubleAttackChance*100)}%)`))
-          process.stdout.write(' ')
-          process.stdout.write(chalk.green('3.') + chalk.green(` 방어한다(${Math.floor(player.defenseChance*100)}%)`))
-          process.stdout.write(' ')
-          process.stdout.write(chalk.green('4.') + chalk.green(` 도망친다(${Math.floor(player.runOutChance*100)}%)`))
-          console.log('');
-          break;
-      case 1:
-          process.stdout.write(chalk.green('1.') + chalk.green(' 일반공격'))
-          process.stdout.write(' ')
-          process.stdout.write(chalk.blue.bgWhite.bold('2.') + chalk.blue.bgWhite.bold(` 연속공격(${Math.floor(player.doubleAttackChance*100)}%)`))
-          process.stdout.write(' ')
-          process.stdout.write(chalk.green('3.') + chalk.green(` 방어한다(${Math.floor(player.defenseChance*100)}%)`))
-          process.stdout.write(' ')
-          process.stdout.write(chalk.green('4.') + chalk.green(` 도망친다(${Math.floor(player.runOutChance*100)}%)`))
-          console.log('');
-          break;
-      case 2:
-          process.stdout.write(chalk.green('1.') + chalk.green(' 일반공격'))
-          process.stdout.write(' ')
-          process.stdout.write(chalk.green('2.') + chalk.green(` 연속공격(${Math.floor(player.doubleAttackChance*100)}%)`))
-          process.stdout.write(' ')
-          process.stdout.write(chalk.blue.bgWhite.bold('3.') + chalk.black.bgWhite.bold(` 방어한다(${Math.floor(player.defenseChance*100)}%)`))
-          process.stdout.write(' ')
-          process.stdout.write(chalk.green('4.') + chalk.green(` 도망친다(${Math.floor(player.runOutChance*100)}%)`))
-          console.log('');
-          break;
-      case 3:
-          process.stdout.write(chalk.green('1.') + chalk.green(' 일반공격'))
-          process.stdout.write(' ')
-          process.stdout.write(chalk.green('2.') + chalk.green(` 연속공격(${Math.floor(player.doubleAttackChance*100)}%)`))
-          process.stdout.write(' ')
-          process.stdout.write(chalk.green('3.') + chalk.green(` 방어한다(${Math.floor(player.defenseChance*100)}%)`))
-          process.stdout.write(' ')
-          process.stdout.write(chalk.blue.bgWhite.bold('4.') + chalk.black.bgWhite.bold(` 도망친다(${Math.floor(player.runOutChance*100)}%)`))
-          console.log('');
-          break;
-      default:
-          console.log('행동을 선택하세요')
-          //handleUserInput(); // 유효하지 않은 입력일 경우 다시 입력 받음
-  }
-  
+  const actions = [
+      `일반공격`,
+      `연속공격(${Math.floor(player.doubleAttackChance * 100)}%)`,
+      `방어한다(${Math.floor(player.defenseChance * 100)}%)`,
+      `도망친다(${Math.floor(player.runOutChance * 100)}%)`
+  ];
+
+  actions.forEach((action, index) => {
+      let formattedAction;
+      if (index === currentPos) {
+          formattedAction = chalk.blue.bgWhite.bold(`${index + 1}. ${action}`);
+      } else {
+          formattedAction = chalk.green(`${index + 1}. ${action}`);
+      }
+      process.stdout.write(formattedAction + ' ');
+  });
+  console.log('');
 }
 
 function displayStatus(stage, player, monster) {
@@ -194,7 +161,7 @@ function displayStatus(stage, player, monster) {
   console.log(chalk.magentaBright(`=====================\n`));
 }
 
-function battle(stage, player, monster) {
+function battle(stage, player, monster, achievementManager) {
   let logs = [];
   var currentPos = 0
   var menuCount = 4
@@ -229,6 +196,9 @@ function battle(stage, player, monster) {
           if (monster.hp > 0) {
               damagedToPlayer = monster.attack(player);  
               logs.push(chalk.magenta(`[${currentPos+1}] 몬스터에게 ${damagedToPlayer}의 피해를 입었습니다!`));
+          } else { // 몬스터가 죽은 경우
+            achievementManager.updateAchievement('첫 번째 몬스터 처치', 1);
+            achievementManager.updateAchievement('몬스터 10마리 처치', 1);
           }
   
           break;
@@ -238,6 +208,10 @@ function battle(stage, player, monster) {
             logs.push(chalk.red(`[${currentPos+1}] 연속공격이 실패했습니다.`));
           } else {
             logs.push(chalk.cyanBright(`[${currentPos+1}] 연속공격이 성공하여 ${damagedToMonster}의 피해를 입혔습니다!`));
+            if (monster.hp <= 0) {
+              achievementManager.updateAchievement('첫 번째 몬스터 처치', 1);
+              achievementManager.updateAchievement('몬스터 10마리 처치', 1);
+            }
           }
         
           if (monster.hp > 0) {
@@ -258,6 +232,8 @@ function battle(stage, player, monster) {
       case 3:
           const runOutResult = player.runOut();
           if (runOutResult) {
+            logs.push(chalk.blueBright(`[${currentPos+1}] 도망에 성공했습니다!`));
+            achievementManager.updateAchievement('도망 성공 5회', 1);
             return true;
             // 다음 스테이지
           } else {
@@ -283,13 +259,13 @@ function battle(stage, player, monster) {
   return false; // 예외적인 종료시 false 반환
 };
 
-export function startGame() {
+export function startGame(achievementManager) {
   const player = new Player();
   let stage = 1;
 
   while (stage <= 10) {
     const monster = new Monster(stage); // %% 인자로 매 스테이지값을 통해 몬스터 강화 %%
-    const win = battle(stage, player, monster);
+    const win = battle(stage, player, monster, achievementManager);
     if (!win) {
       if (readlineSync.keyInYN('다시 도전하시겠습니까?')) { // % 키보드 선택 방식으로 바꾸기 %
         return true
